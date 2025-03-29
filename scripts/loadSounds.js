@@ -13,7 +13,7 @@ function loadSounds(list) {
 		}
 
 		sounds.forEach((sound) => {
-			const soundName = sound.split('\\').pop();
+			const soundName = sound.split('\\').pop().split('.')[0];
 
 			const soundElement = template.content.cloneNode(true);
 			const button = soundElement.querySelector('button');
@@ -24,6 +24,7 @@ function loadSounds(list) {
 			audio.setAttribute('src', sound);
 			savedVolume != null && (audio.volume = savedVolume);
 			savedVolume != null && (slider.value = savedVolume);
+			savedVolume != null && (slider.nextElementSibling.textContent = `${Math.round(savedVolume * 100)}%`);
 
 			button.textContent = soundName;
 			button.setAttribute('data-color', getRandomColor());
