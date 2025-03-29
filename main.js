@@ -32,8 +32,6 @@ ipcMain.handle('get-sounds', (event, list) => {
 
 	try {
 		let filePaths = [];
-		console.log('list: ', list);
-		console.log('path: ', directory);
 
 		if (list === 'All') {
 			const subfolders = fs.readdirSync(directory).filter((subfolder) => {
@@ -52,10 +50,10 @@ ipcMain.handle('get-sounds', (event, list) => {
 
 		console.log('Files found:', filePaths);
 
-		return filePaths; // Return the array of full file paths
+		return filePaths;
 	} catch (error) {
 		console.error('Error reading directory:', error);
-		return []; // Return an empty array in case of error
+		return [];
 	}
 });
 
@@ -77,12 +75,14 @@ let mainWindow;
 
 app.whenReady().then(() => {
 	mainWindow = new BrowserWindow({
+		show: false,
 		webPreferences: {
 			nodeIntegration: false, // Disable node integration for security
 			contextIsolation: true, // Ensure isolation for renderer process
 			preload: path.join(__dirname, 'preload.js'), // Preload script for renderer communication
 		},
 	});
-
 	mainWindow.loadFile('index.html');
+	mainWindow.maximize();
+	mainWindow.show();
 });
