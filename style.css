@@ -1,0 +1,115 @@
+:root {
+
+	font-size: 17px;
+	font-family: 'calibri';
+	color: #ddd;
+}
+
+h1, h2, h3, h4 {
+	font-family: 'Beleren2016';
+}
+
+h1 {
+	font-size: 3rem;
+	text-transform: uppercase;
+}
+
+h2 {
+	font-size: 2rem;
+}
+
+h3 {
+	font-size: 1.7rem;
+}
+
+h4 {
+	font-size: 1.5rem;
+}
+
+button {
+	background: #555;
+	outline: 0;
+	border: unset;
+	color: white;
+	border-radius: 5px;
+	padding: 5px 10px;
+}
+
+body {
+	position: relative;
+	background: #333;
+	overflow: hidden;
+
+	h1 {
+		margin-top: 20px;
+		padding-bottom: 10px;
+		text-align: center;
+		width: 100%;
+		display: block;
+		border-bottom: 2px solid #888;
+	}
+
+	main {
+		display: grid;
+		grid-template-columns: 1fr 4fr;
+		height: 100%;
+
+		#content {
+			padding: 20px;
+			overflow: auto;
+
+			#soundGrid {
+				padding: 20px;
+				display: flex;
+				flex-direction: row;
+				gap: 10px;
+
+				.sound {
+					display: grid;
+					place-items: center;
+					width: 100px;
+					height: 100px;
+
+					button {
+						height: 100px;
+						width: 100px;
+						border-radius: 0;
+						background-color: attr(data-color type(<color>), salmon);
+						color: black;
+					}
+
+					input {
+						margin-top: 10px;
+						width: 70px;
+						height: 6px;
+						border-radius: 0;
+						accent-color: coral;
+						position: relative;
+
+						+output {
+							opacity: 0;
+							transition: opacity 0.5s;
+						}
+
+						&:hover+output {
+							opacity: 1;
+						}
+					}
+				}
+			}
+		}
+
+		aside {
+			height: 100%;
+			padding: 20px;
+			border-right: 1px solid #888;
+
+			ul {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+		}
+	}
+
+}

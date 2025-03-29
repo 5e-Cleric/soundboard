@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Custom Soundboard</title>
+		<link rel="stylesheet" href="reset.css">
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<h1>Soundboard</h1>
+		<main>
+			<aside id="aside">
+				<h2>My lists</h2>
+				<ul id="lists"></ul>
+				<template id="listTemplate">
+					<li><button></button></li>
+				</template>
+			</aside>
+			<article id="content" data-list="All">
+				<div id="soundGrid"></div>
+				<template id="soundTemplate">
+					<div class="sound">
+						<button></button>
+						<audio src></audio>
+						<input type="range" data-audio-id class="volumeSlider"
+							min="0" max="1"
+							step="0.01" value="1">
+						<output></output>
+					</div>
+				</template>
+			</article>
+		</main>
+
+		<script src="loadSounds.js"></script>
+		<script src="loadLists.js"></script>
+	</body>
+</html>
