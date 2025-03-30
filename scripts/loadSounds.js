@@ -43,8 +43,19 @@ function loadSounds(list) {
 }
 
 function playSound(soundName) {
-	const clickedAudio = document.querySelector(`[src*="${soundName}"]`);
+	let clickedAudio = document.querySelector(`[src$="${soundName}.mp3"]`);
 	const soundGrid = document.getElementById('soundGrid');
+	const soundNameIsDuplicated = `${soundName}.mp3` !== clickedAudio.getAttribute('src').split('\\').pop();
+
+	if (soundNameIsDuplicated) {
+		//if another file has the same substring in it, get them all, and filter out the bad ones
+		const coincidentAudios = document.querySelectorAll(`[src$="${soundName}.mp3"]`);
+		console.log(coincidentAudios);
+		clickedAudio = [...coincidentAudios].filter(
+			(audio) => `${soundName}.mp3` === audio.getAttribute('src').split('\\').pop()
+		);
+		clickedAudio = clickedAudio[0];
+	}
 
 	if (!clickedAudio) {
 		console.warn(`No audio found for: ${soundName}`);
