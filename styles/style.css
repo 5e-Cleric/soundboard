@@ -121,29 +121,9 @@ body {
 								background-color: attr(data-color type(<color>), salmon);
 								color: black;
 							}
-
-							input {
-								margin-top: 10px;
-								width: 70px;
-								height: 6px;
-								border-radius: 0;
-								accent-color: coral;
-								position: relative;
-
-								+output {
-									opacity: 0;
-									transition: opacity 0.5s;
-								}
-
-								&:hover+output {
-									opacity: 1;
-								}
-							}
 						}
 					}
 				}
-
-
 
 				&#content-songs {
 					display: grid;
@@ -219,6 +199,10 @@ body {
 								width: 70%;
 								display: flex;
 								justify-content: space-evenly;
+
+								&.active {
+									background:green;
+								}
 							}
 
 							.track {
@@ -237,6 +221,22 @@ body {
 					}
 				}
 
+				.volumeSlider {
+					margin-top: 10px;
+					width: 70px;
+					height: 6px;
+					accent-color: coral;
+					position: relative;
+
+					+output {
+						opacity: 0;
+						transition: opacity 0.5s;
+					}
+
+					&:hover+output {
+						opacity: 1;
+					}
+				}
 			}
 		}
 
