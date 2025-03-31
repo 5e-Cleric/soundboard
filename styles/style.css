@@ -200,8 +200,16 @@ body {
 								display: flex;
 								justify-content: space-evenly;
 
-								&.active {
-									background:green;
+								i {
+									pointer-events: none;
+								}
+
+								.active, .loop.list, .loop.song {
+									background: green;
+
+									i.fa-1 {
+										padding-left: 10px;
+									}
 								}
 							}
 
