@@ -48,9 +48,7 @@ function playSound(soundName) {
 	const soundNameIsDuplicated = `${soundName}.mp3` !== clickedAudio.getAttribute('src').split('\\').pop();
 
 	if (soundNameIsDuplicated) {
-		//if another file has the same substring in it, get them all, and filter out the bad ones
 		const coincidentAudios = document.querySelectorAll(`[src$="${soundName}.mp3"]`);
-		console.log(coincidentAudios);
 		clickedAudio = [...coincidentAudios].filter(
 			(audio) => `${soundName}.mp3` === audio.getAttribute('src').split('\\').pop()
 		);
@@ -61,14 +59,16 @@ function playSound(soundName) {
 		console.warn(`No audio found for: ${soundName}`);
 		return;
 	}
+
 	clickedAudio.pause();
 	clickedAudio.currentTime = 0;
 
+	// Pause and reset all other playing sounds
 	const allAudios = soundGrid.querySelectorAll('audio');
 	allAudios.forEach((audioElement) => {
 		if (audioElement !== clickedAudio) {
-			audioElement.pause(); // Pause any other audio that's playing
-			audioElement.currentTime = 0; // Reset the audio to the beginning
+			audioElement.pause();
+			audioElement.currentTime = 0;
 		}
 	});
 
