@@ -3,6 +3,11 @@
 	font-size: 17px;
 	font-family: 'calibri';
 	color: #ddd;
+
+	--bg-1: #333;
+	--bg-2: #444;
+	--button-bg: #555;
+	--border-1: #888;
 }
 
 h1, h2, h3, h4 {
@@ -27,7 +32,7 @@ h4 {
 }
 
 button {
-	background: #555;
+	background: var(--button-bg);
 	outline: 0;
 	border: unset;
 	color: white;
@@ -37,9 +42,9 @@ button {
 
 body {
 	position: relative;
-	background: #333;
+	background: var(--bg-1);
 	overflow: hidden;
-	display:flex;
+	display: flex;
 	flex-direction: column;
 
 	h1 {
@@ -48,24 +53,28 @@ body {
 		text-align: center;
 		width: 100%;
 		display: block;
-		border-bottom: 2px solid #888;
-		height:70px;
+		border-bottom: 2px solid var(--border-1);
+		height: 70px;
 	}
 
 	main {
 		display: grid;
-		grid-template-columns: 1fr 3fr;
-		height:calc(100vh - 70px);
+		grid-template-columns: 200px 1fr;
+		height: calc(100vh - 70px);
 
-		#content {
-			padding: 20px;
-			height:100%;
-			overflow-y: auto;
+		.contentTab {
+			height: 100%;
+			display: none;
+
+			&#sounds {
+				padding: 20px;
+				overflow-y: auto;
+			}
 
 			#soundGrid {
 				padding: 20px;
 				display: flex;
-				flex-wrap:wrap;
+				flex-wrap: wrap;
 				gap: 10px;
 
 				.sound {
@@ -100,12 +109,105 @@ body {
 					}
 				}
 			}
+
+			&#music {
+				display: grid;
+				grid-template-rows: 50px 1fr 100px;
+
+				#listHeader {
+					padding: 20px;
+					padding-left: 40px;
+					display: grid;
+					grid-template-columns: 100px 3fr 6fr 50px;
+
+				}
+
+				#musicList {
+					display: flex;
+					flex-direction: column;
+					gap: 10px;
+					padding: 20px;
+					height: 100%;
+					overflow-y: auto;
+
+					.song {
+						display: grid;
+						grid-template-columns: 50px 50px 3fr 6fr 50px;
+						height: 50px;
+						align-items: center;
+						justify-items: start;
+						border-radius: 5px;
+
+						&:hover {
+							background: var(--bg-2);
+						}
+
+						button {
+							border-radius: 200px;
+							width: 50px;
+							height: 50px;
+						}
+
+						.details {
+							display: flex;
+							flex-direction: column;
+							padding-left: 20px;
+
+							.author {
+								font-size: 0.8em;
+								opacity: 0.8;
+							}
+						}
+
+						.number, .duration {
+							width: 50px;
+							text-align: center;
+						}
+
+					}
+				}
+
+				.playing {
+					padding: 20px;
+					border-top: 1px solid var(--border-1);
+					display: flex;
+					justify-content: space-between;
+
+					.controls {
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						width: 50%;
+						align-items: center;
+
+						.buttons {
+							width: 70%;
+							display: flex;
+							justify-content: space-evenly;
+						}
+
+						.track {
+							width: 100%;
+							display: grid;
+							grid-template-columns: 50px 1fr 50px;
+
+							.progress {
+								display: block;
+								width: 100%;
+								accent-color: white;
+							}
+						}
+
+					}
+				}
+			}
+
 		}
 
 		aside {
 			height: 100%;
 			padding: 20px;
-			border-right: 1px solid #888;
+			border-right: 1px solid var(--border-1);
 
 			ul {
 				display: flex;

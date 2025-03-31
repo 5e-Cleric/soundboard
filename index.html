@@ -4,6 +4,7 @@
 		<title>Custom Soundboard</title>
 		<link rel="stylesheet" href="styles/reset.css">
 		<link rel="stylesheet" href="styles/style.css">
+		<link rel="stylesheet" href="styles/fonts/all.css">
 	</head>
 	<body>
 		<h1>Soundboard</h1>
@@ -29,23 +30,66 @@
 				</template>
 			</article>
 			<article id="music" class="contentTab" data-list="All">
+				<div id="listHeader">
+					<div>#</div>
+					<div>Title & author</div>
+					<div>Album</div>
+					<i class="fas fa-clock"></i>
+				</div>
 				<div id="musicList"></div>
-				<template id="songTemplate">
-					<div class="song">
-						<button>
-							
-						</button>
-						<audio src></audio>
+				<div class="playing">
+					<div class="currentSong">
+						<img src class="thumbnail">
+						<div class="details">
+							<span class="title"></span>
+							<span class="author">unknown author</span>
+						</div>
+					</div>
+					<div class="controls">
+						<div class="buttons">
+							<button class="mix"><i class="fas fa-shuffle"></i></button>
+							<button class="before"><i class="fas fa-backward-step"></i></button>
+							<button class="play"><i class="fas fa-play"></i></button>
+							<button class="after"><i class="fas fa-forward-step"></i></button>
+							<button class="loop"><i class="fas fa-repeat"></i></button>
+						</div>
+						<div class="track">
+							<div class="currentTime"></div>
+							<input type="range" data-audio-id class="progress"
+							min="0" max="1"
+							step="0.01" value="0">
+							<div class="totalTime"></div>
+						</div>
+
+					</div>
+					<div class="volume">
+						<button class="mute"><i class="fas fa-volume"></i></button>
 						<input type="range" data-audio-id class="volumeSlider"
 							min="0" max="1"
 							step="0.01" value="1">
 						<output>100%</output>
+					</div>
+				</div>
+				<template id="songTemplate">
+					<div class="song">
+						<div class="number"></div>
+						<button>
+							<i class="fas fa-play"></i>
+						</button>
+						<audio src></audio>
+						<div class="details">
+							<span class="title"></span>
+							<span class="author">unknown author</span>
+						</div>
+						<div class="album"></div>
+						<div class="duration"></div>
 					</div>
 				</template>
 			</article>
 		</main>
 
 		<script src="scripts/loadSounds.js"></script>
+		<script src="scripts/loadSongs.js"></script>
 		<script src="scripts/loadLists.js"></script>
 	</body>
 </html>

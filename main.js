@@ -1,54 +1,68 @@
-const { app, BrowserWindow } = require('electron');
-const { ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const NodeID3 = require('node-id3');
+const mm = require('music-metadata');
 
 function getFilesInDirectory(directory) {
-	const files = fs.readdirSync(directory).filter((file) => {
+	return fs.readdirSync(directory).filter((file) => {
 		const filePath = path.join(directory, file);
-		const stat = fs.statSync(filePath);
-		return stat.isFile();
+		return fs.statSync(filePath).isFile();
 	});
-	return files;
 }
 
 function getSubdirectories(directory) {
-	const subfolders = fs.readdirSync(directory).filter((subfolder) => {
+	return fs.readdirSync(directory).filter((subfolder) => {
 		return fs.statSync(path.join(directory, subfolder)).isDirectory();
 	});
-	return subfolders;
+}
+
+function updateTrackNumber(filePath, trackNumber) {
+	let tags = NodeID3.read(filePath) || {};
+	tags.trackNumber = trackNumber.toString();
+	NodeID3.write(tags, filePath);
+}
+
+function getOrderedTrackNumbers(filePaths) {
+	const trackNumbers = filePaths
+		.map((filePath) => {
+			const tags = NodeID3.read(filePath) || {};
+			return tags.trackNumber ? parseInt(tags.trackNumber, 10) : null;
+		})
+		.filter((num) => num !== null)
+		.sort((a, b) => a - b);
+
+	return trackNumbers;
+}
+
+function assignMissingTrackNumbers(filePaths) {
+	const existingTracks = getOrderedTrackNumbers(filePaths);
+	let nextTrack = existingTracks.length ? Math.max(...existingTracks) + 1 : 1;
+
+	const sortedFiles = [...filePaths].sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+
+	sortedFiles.forEach((filePath) => {
+		const tags = NodeID3.read(filePath) || {};
+		if (!tags.trackNumber) {
+			updateTrackNumber(filePath, nextTrack);
+			nextTrack++;
+		}
+	});
 }
 
 ipcMain.handle('get-sounds', (event, list) => {
-	let directory;
-
-	const downloadsFolder = app.getPath('downloads');
-
-	if (list === 'All') {
-		directory = path.join(downloadsFolder, 'sounds');
-	} else {
-		directory = path.join(downloadsFolder, 'sounds', list);
-	}
+	let directory = path.join(app.getPath('downloads'), 'sounds', list === 'All' ? '' : list);
 
 	try {
-		let filePaths = [];
+		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
 
 		if (list === 'All') {
-			const subfolders = fs.readdirSync(directory).filter((subfolder) => {
-				return fs.statSync(path.join(directory, subfolder)).isDirectory();
-			});
-
-			subfolders.forEach((subfolder) => {
+			getSubdirectories(directory).forEach((subfolder) => {
 				const subfolderPath = path.join(directory, subfolder);
 				const files = getFilesInDirectory(subfolderPath);
-				filePaths = filePaths.concat(files.map((file) => path.join(subfolderPath, file))); // Map to full paths
+				filePaths = filePaths.concat(files.map((file) => path.join(subfolderPath, file)));
 			});
-		} else {
-			const files = getFilesInDirectory(directory);
-			filePaths = files.map((file) => path.join(directory, file)); // Map to full paths
 		}
-
-		console.log('Files found:', filePaths);
 
 		return filePaths;
 	} catch (error) {
@@ -57,29 +71,61 @@ ipcMain.handle('get-sounds', (event, list) => {
 	}
 });
 
-ipcMain.handle('get-subdirectories', () => {
-	const downloadsFolder = app.getPath('downloads');
-	const soundsDirectory = path.join(downloadsFolder, 'sounds');
+ipcMain.handle('get-songs', async (event, list) => {
+	let directory = path.join(app.getPath('downloads'), 'songs', list === 'All' ? '' : list);
 
 	try {
-		const subdirectories = getSubdirectories(soundsDirectory);
-		console.log('Subdirectories found:', subdirectories);
-		return subdirectories; // Return the list of subdirectories
+		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
+
+		if (list === 'All') {
+			getSubdirectories(directory).forEach((subfolder) => {
+				const subfolderPath = path.join(directory, subfolder);
+				const files = getFilesInDirectory(subfolderPath);
+				filePaths = filePaths.concat(files.map((file) => path.join(subfolderPath, file)));
+			});
+		}
+
+		assignMissingTrackNumbers(filePaths);
+
+		const fileMetadata = await Promise.all(
+			filePaths.map(async (filePath) => {
+				const tags = NodeID3.read(filePath) || {};
+				const metadata = await mm.parseFile(filePath);
+
+				return {
+					name: path.basename(filePath),
+					source: filePath,
+					author: tags.artist || 'Unknown Artist',
+					album: tags.album || 'Unknown Album',
+					trackNumber: tags.trackNumber || 'Unknown',
+					duration: metadata.format.duration ? Math.round(metadata.format.duration) : 'Unknown',
+				};
+			})
+		);
+		return fileMetadata;
 	} catch (error) {
-		console.error('Error reading subdirectories:', error);
-		return []; // Return an empty array in case of error
+		console.error('Error reading directory:', error);
+		return [];
 	}
 });
 
-let mainWindow;
+ipcMain.handle('get-subdirectories', (event, type) => {
+	const soundsDirectory = path.join(app.getPath('downloads'), type);
+	try {
+		return getSubdirectories(soundsDirectory);
+	} catch (error) {
+		console.error('Error reading subdirectories:', error);
+		return [];
+	}
+});
 
 app.whenReady().then(() => {
-	mainWindow = new BrowserWindow({
+	let mainWindow = new BrowserWindow({
 		show: false,
 		webPreferences: {
-			nodeIntegration: false, // Disable node integration for security
-			contextIsolation: true, // Ensure isolation for renderer process
-			preload: path.join(__dirname, 'preload.js'), // Preload script for renderer communication
+			nodeIntegration: false,
+			contextIsolation: true,
+			preload: path.join(__dirname, 'preload.js'),
 		},
 	});
 	mainWindow.loadFile('index.html');

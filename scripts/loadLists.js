@@ -2,7 +2,7 @@ function loadLists() {
 	const listsList = document.getElementById('lists');
 	const template = document.getElementById('listTemplate');
 
-	window.electron.ipcRenderer.invoke('get-subdirectories').then((folders) => {
+	window.electron.ipcRenderer.invoke('get-subdirectories', 'sounds').then((folders) => {
 		lists.textContent = '';
 		let All = document.createElement('li');
 		All.innerHTML = `<button onclick="loadSounds('All')">All</button>`;
