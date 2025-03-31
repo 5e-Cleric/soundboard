@@ -192,7 +192,6 @@ function loadControls(trackId) {
 	const newAfter = controls.querySelector('.after');
 
 	const audioBefore = audio.parentElement.previousElementSibling;
-	const audioAfter = audio.parentElement.nextElementSibling;
 
 	newBefore.addEventListener('click', () => {
 		if (audioBefore) {
@@ -203,14 +202,7 @@ function loadControls(trackId) {
 	});
 
 	newPlay.addEventListener('click', () => playSong(trackId));
-
-	newAfter.addEventListener('click', () => {
-		if (audioAfter) {
-			playSong(audioAfter.getAttribute('data-track-id'));
-		} else {
-			stopSong(trackId, 1);
-		}
-	});
+	newAfter.addEventListener('click', () => loadNext(trackId));
 
 	audio.addEventListener('timeupdate', () => {
 		progressBar.value = audio.currentTime / audio.duration;
@@ -231,6 +223,7 @@ function loadNext(trackId) {
 
 	stopSong(trackId, 0);
 
+	console.log(shuffleState);
 	const getNextTrackId = () => {
 		if (loopState === 'song') {
 			return trackId;
