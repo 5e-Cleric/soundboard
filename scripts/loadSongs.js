@@ -1,15 +1,15 @@
 function loadSongs(list) {
-	const musicList = document.getElementById('musicList');
+	const songList = document.getElementById('songList');
 	const template = document.getElementById('songTemplate');
 
 	window.electron.ipcRenderer.invoke('get-songs', list).then((songs) => {
 		console.log(songs.length, ' songs loaded');
-		musicList.textContent = '';
+		songList.textContent = '';
 
 		if (songs.length === 0) {
 			let noSongs = document.createElement('div');
 			noSongs.innerHTML = `<p>You may add more songs adding them inside the songs directory in your downloads folder.</p>`;
-			musicList.appendChild(noSongs);
+			songList.appendChild(noSongs);
 		}
 
 		songs.forEach((song) => {
@@ -27,7 +27,7 @@ function loadSongs(list) {
 			const templateAlbum = songElement.querySelector('.album');
 			const templateDuration = songElement.querySelector('.duration');
 
-			const savedVolume = localStorage.getItem(`music-volume`);
+			const savedVolume = localStorage.getItem(`song-volume`);
 
 			songElement.querySelector('.song').setAttribute('data-track-id', trackId);
 
@@ -42,7 +42,7 @@ function loadSongs(list) {
 			templateAlbum.textContent = album;
 			templateDuration.textContent = durationWithUnits;
 
-			musicList.appendChild(songElement);
+			songList.appendChild(songElement);
 		});
 	});
 }
@@ -60,7 +60,7 @@ function formatDuration(durationInSeconds) {
 }
 
 function playSong(trackId) {
-	let clickedAudio = document.querySelector(`#musicList [data-track-id="${trackId}"] audio`);
+	let clickedAudio = document.querySelector(`#songList [data-track-id="${trackId}"] audio`);
 	if (!clickedAudio) {
 		console.warn(`No audio found for: ${songName}`);
 		return;
@@ -68,11 +68,11 @@ function playSong(trackId) {
 	if (!clickedAudio.paused) {
 		console.log('it was not paused');
 		clickedAudio.pause();
-		const buttonIcon = document.querySelector(`#musicList [data-track-id="${trackId}"] button i`);
+		const buttonIcon = document.querySelector(`#songList [data-track-id="${trackId}"] button i`);
 		buttonIcon.classList.remove('fa-pause');
 		buttonIcon.classList.add('fa-play');
 	} else {
-		const allSongs = document.querySelectorAll('#musicList .song');
+		const allSongs = document.querySelectorAll('#songList .song');
 		allSongs.forEach((song) => {
 			const audio = song.querySelector('audio');
 			if (audio !== clickedAudio && !audio.paused) {
@@ -85,7 +85,7 @@ function playSong(trackId) {
 
 		clickedAudio.play();
 
-		const buttonIcon = document.querySelector(`#musicList [data-track-id="${trackId}"] button i`);
+		const buttonIcon = document.querySelector(`#songList [data-track-id="${trackId}"] button i`);
 		buttonIcon.classList.remove('fa-play');
 		buttonIcon.classList.add('fa-pause');
 	}

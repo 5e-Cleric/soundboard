@@ -7,89 +7,109 @@
 		<link rel="stylesheet" href="styles/fonts/all.css">
 	</head>
 	<body>
-		<h1>Soundboard</h1>
+		<header>
+			<h1>Soundboard</h1>
+			<nav>
+				<button onclick="openTab('sounds')">Sounds</button>
+				<button onclick="openTab('songs')">Songs</button>
+			</nav>
+		</header>
 		<main>
 			<aside id="aside">
-				<h2>My lists</h2>
-				<ul id="lists"></ul>
+				<div class="lists">
+					<div id="list-sounds" class="listTab open">
+						<h2>Sound lists</h2>
+						<ul></ul>
+					</div>
+					<div id="list-songs" class="listTab">
+						<h2>Song playlists</h2>
+						<ul></ul>
+					</div>
+				</div>
+
 				<template id="listTemplate">
 					<li><button></button></li>
 				</template>
-			</aside>
-			<article id="sounds" class="contentTab" data-list="All">
-				<div id="soundGrid"></div>
-				<template id="soundTemplate">
-					<div class="sound">
-						<button></button>
-						<audio src></audio>
-						<input type="range" data-audio-id class="volumeSlider"
-							min="0" max="1"
-							step="0.01" value="1">
-						<output>100%</output>
-					</div>
-				</template>
-			</article>
-			<article id="music" class="contentTab" data-list="All">
-				<div id="listHeader">
-					<div>#</div>
-					<div>Title & author</div>
-					<div>Album</div>
-					<i class="fas fa-clock"></i>
-				</div>
-				<div id="musicList"></div>
-				<div class="playing">
-					<div class="currentSong">
-						<img src class="thumbnail">
-						<div class="details">
-							<span class="title"></span>
-							<span class="author">unknown author</span>
-						</div>
-					</div>
-					<div class="controls">
-						<div class="buttons">
-							<button class="mix"><i class="fas fa-shuffle"></i></button>
-							<button class="before"><i class="fas fa-backward-step"></i></button>
-							<button class="play"><i class="fas fa-play"></i></button>
-							<button class="after"><i class="fas fa-forward-step"></i></button>
-							<button class="loop"><i class="fas fa-repeat"></i></button>
-						</div>
-						<div class="track">
-							<div class="currentTime"></div>
-							<input type="range" data-audio-id class="progress"
-							min="0" max="1"
-							step="0.01" value="0">
-							<div class="totalTime"></div>
-						</div>
 
-					</div>
-					<div class="volume">
-						<button class="mute"><i class="fas fa-volume"></i></button>
-						<input type="range" data-audio-id class="volumeSlider"
-							min="0" max="1"
-							step="0.01" value="1">
-						<output>100%</output>
-					</div>
-				</div>
-				<template id="songTemplate">
-					<div class="song">
-						<div class="number"></div>
-						<button>
-							<i class="fas fa-play"></i>
-						</button>
-						<audio src></audio>
-						<div class="details">
-							<span class="title"></span>
-							<span class="author">unknown author</span>
+			</aside>
+			<div class="tabHolder">
+				<article id="content-sounds" class="contentTab open" data-list="All">
+					<div id="soundGrid"></div>
+					<template id="soundTemplate">
+						<div class="sound">
+							<button></button>
+							<audio src></audio>
+							<input type="range" data-audio-id class="volumeSlider"
+								min="0" max="1"
+								step="0.01" value="1">
+							<output>100%</output>
 						</div>
-						<div class="album"></div>
-						<div class="duration"></div>
+					</template>
+				</article>
+				<article id="content-songs" class="contentTab" data-list="All">
+					<div id="listHeader">
+						<div>#</div>
+						<div>Title & author</div>
+						<div>Album</div>
+						<i class="fas fa-clock"></i>
 					</div>
-				</template>
-			</article>
+					<div id="songList"></div>
+					<div class="playing">
+						<div class="currentSong">
+							<img src class="thumbnail">
+							<div class="details">
+								<span class="title"></span>
+								<span class="author">unknown author</span>
+							</div>
+						</div>
+						<div class="controls">
+							<div class="buttons">
+								<button class="mix"><i class="fas fa-shuffle"></i></button>
+								<button class="before"><i class="fas fa-backward-step"></i></button>
+								<button class="play"><i class="fas fa-play"></i></button>
+								<button class="after"><i class="fas fa-forward-step"></i></button>
+								<button class="loop"><i class="fas fa-repeat"></i></button>
+							</div>
+							<div class="track">
+								<div class="currentTime"></div>
+								<input type="range" data-audio-id class="progress"
+									min="0" max="1"
+									step="0.01" value="0">
+								<div class="totalTime"></div>
+							</div>
+
+						</div>
+						<div class="volume">
+							<button class="mute"><i class="fas fa-volume"></i></button>
+							<input type="range" data-audio-id class="volumeSlider"
+								min="0" max="1"
+								step="0.01" value="1">
+							<output>100%</output>
+						</div>
+					</div>
+					<template id="songTemplate">
+						<div class="song">
+							<div class="number"></div>
+							<button>
+								<i class="fas fa-play"></i>
+							</button>
+							<audio src></audio>
+							<div class="details">
+								<span class="title"></span>
+								<span class="author">unknown author</span>
+							</div>
+							<div class="album"></div>
+							<div class="duration"></div>
+						</div>
+					</template>
+				</article>
+			</div>
+
 		</main>
 
 		<script src="scripts/loadSounds.js"></script>
 		<script src="scripts/loadSongs.js"></script>
 		<script src="scripts/loadLists.js"></script>
+		<script src="scripts/functions.js"></script>
 	</body>
 </html>
