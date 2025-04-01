@@ -55,16 +55,18 @@ ipcMain.handle('get-sounds', (event, list) => {
 
 	try {
 		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
+		
 
 		if (list === 'All') {
 			getSubdirectories(directory).forEach((subfolder) => {
 				const subfolderPath = path.join(directory, subfolder);
 				const files = getFilesInDirectory(subfolderPath);
 				filePaths = filePaths.concat(files.map((file) => path.join(subfolderPath, file)));
+
 			});
 		}
-
-		return filePaths;
+		const mp3Files = filePaths.filter(file => file.endsWith('.mp3'));
+		return mp3Files;
 	} catch (error) {
 		console.error('Error reading directory:', error);
 		return [];
@@ -85,10 +87,11 @@ ipcMain.handle('get-songs', async (event, list) => {
 			});
 		}
 
-		assignMissingTrackNumbers(filePaths);
+		const mp3Files = filePaths.filter(file => file.endsWith('.mp3'));
+		assignMissingTrackNumbers(mp3Files);
 
 		const fileMetadata = await Promise.all(
-			filePaths.map(async (filePath) => {
+			mp3Files.map(async (filePath) => {
 				const tags = NodeID3.read(filePath) || {};
 				const metadata = await mm.parseFile(filePath);
 
