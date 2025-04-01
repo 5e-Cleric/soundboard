@@ -10,6 +10,9 @@
 	--button-bg-hover: #666;
 	--button-bg-click: #777;
 	--border-1: #888;
+	--accent-color: coral;
+	--accent-color-dim: rgb(168, 82, 51);
+	--accent-color-dimmer: rgb(112, 63, 45);
 }
 
 h1, h2, h3, h4 {
@@ -144,6 +147,13 @@ body {
 						padding: 20px;
 						height: 100%;
 						overflow-y: auto;
+						transition: transform 0.5s ease, opacity 0.5s ease;
+						opacity: 1;
+
+						&.shuffling {
+							opacity: 0.5;
+							transform: translateY(-10px);
+						}
 
 						.song {
 							display: grid;
@@ -153,14 +163,25 @@ body {
 							justify-items: start;
 							border-radius: 5px;
 
+							&.playing {
+								background: var(--accent-color-dimmer);
+
+								&:hover {
+									background: var(--accent-color-dim);
+								}
+							}
+
 							&:hover {
 								background: var(--bg-2);
 							}
 
 							button {
+								display: grid;
+								place-items: center;
 								border-radius: 200px;
-								width: 50px;
-								height: 50px;
+								width: 30px;
+								height: 30px;
+								margin: 10px;
 							}
 
 							.details {
@@ -182,17 +203,42 @@ body {
 						}
 					}
 
-					.playing {
+					#audioList {
+						display: none;
+					}
+
+					>.playing {
 						padding: 20px;
 						border-top: 1px solid var(--border-1);
-						display: flex;
-						justify-content: space-between;
+						display: grid;
+						grid-template-columns: 300px 1fr 300px;
+						align-items: center;
+						justify-items: center;
+
+						.details {
+							width: 300px;
+							display: flex;
+							flex-direction: column;
+							padding-left: 20px;
+
+							.title, .author {
+								width: 300px;
+								overflow: hidden;
+								white-space: nowrap;
+								text-overflow: ellipsis;
+							}
+
+							.author {
+								font-size: 0.8em;
+								opacity: 0.8;
+							}
+						}
 
 						.controls {
 							display: flex;
 							flex-direction: column;
 							justify-content: center;
-							width: 50%;
+							width: 70%;
 							align-items: center;
 
 							.buttons {
@@ -225,6 +271,23 @@ body {
 								}
 							}
 
+
+
+						}
+
+						.volume {
+							display: flex;
+							align-items: center;
+							gap:20px;
+
+							button {
+								width: 35px;
+							}
+
+							input {
+								width: 200px;
+								margin-block: auto;
+							}
 						}
 					}
 				}
@@ -233,12 +296,14 @@ body {
 					margin-top: 10px;
 					width: 70px;
 					height: 6px;
-					accent-color: coral;
+					accent-color: var(--accent-color);
 					position: relative;
 
 					+output {
+						display: block;
 						opacity: 0;
 						transition: opacity 0.5s;
+						width: 50px;
 					}
 
 					&:hover+output {
@@ -266,6 +331,10 @@ body {
 
 					&.open {
 						z-index: 1;
+					}
+
+					h2 {
+						margin-bottom:30px;
 					}
 
 					ul {

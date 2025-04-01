@@ -23,31 +23,35 @@ function updateTrackNumber(filePath, trackNumber) {
 	NodeID3.write(tags, filePath);
 }
 
-function getOrderedTrackNumbers(filePaths) {
-	const trackNumbers = filePaths
-		.map((filePath) => {
-			const tags = NodeID3.read(filePath) || {};
-			return tags.trackNumber ? parseInt(tags.trackNumber, 10) : null;
-		})
-		.filter((num) => num !== null)
-		.sort((a, b) => a - b);
+function assignMissingTrackNumbers(filePaths) {
+	const totalTracks = filePaths.length;
+	const sequentialTracks = Array.from({ length: totalTracks }, (_, index) => index + 1);
 
-	return trackNumbers;
+	const files = filePaths.map((filePath) => {
+		const currentTrack = NodeID3.read(filePath).trackNumber || 0;
+		return { filePath, currentTrack };
+	});
+
+	files.sort((a, b) => a.currentTrack - b.currentTrack);
+
+	files.forEach((file, i) => {
+		const expected = sequentialTracks[i];
+		let assigned = file.currentTrack;
+		if (file.currentTrack !== expected) {
+			assigned = expected;
+		}
+		updateTrackNumber(file.filePath, assigned);
+	});
 }
 
-function assignMissingTrackNumbers(filePaths) {
-	const existingTracks = getOrderedTrackNumbers(filePaths);
-	let nextTrack = existingTracks.length ? Math.max(...existingTracks) + 1 : 1;
-
-	const sortedFiles = [...filePaths].sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
-
-	sortedFiles.forEach((filePath) => {
-		const tags = NodeID3.read(filePath) || {};
-		if (!tags.trackNumber) {
-			updateTrackNumber(filePath, nextTrack);
-			nextTrack++;
-		}
-	});
+function sortFiles(mp3Files) {
+	return mp3Files
+		.map((filePath) => {
+			const tags = NodeID3.read(filePath) || {};
+			return { filePath, trackNumber: tags.trackNumber ? parseInt(tags.trackNumber, 10) : 0 };
+		})
+		.sort((a, b) => a.trackNumber - b.trackNumber)
+		.map((file) => file.filePath);
 }
 
 ipcMain.handle('get-sounds', (event, list) => {
@@ -55,17 +59,15 @@ ipcMain.handle('get-sounds', (event, list) => {
 
 	try {
 		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
-		
 
 		if (list === 'All') {
 			getSubdirectories(directory).forEach((subfolder) => {
 				const subfolderPath = path.join(directory, subfolder);
 				const files = getFilesInDirectory(subfolderPath);
 				filePaths = filePaths.concat(files.map((file) => path.join(subfolderPath, file)));
-
 			});
 		}
-		const mp3Files = filePaths.filter(file => file.endsWith('.mp3'));
+		const mp3Files = filePaths.filter((file) => file.endsWith('.mp3'));
 		return mp3Files;
 	} catch (error) {
 		console.error('Error reading directory:', error);
@@ -87,11 +89,14 @@ ipcMain.handle('get-songs', async (event, list) => {
 			});
 		}
 
-		const mp3Files = filePaths.filter(file => file.endsWith('.mp3'));
+		const mp3Files = filePaths.filter((file) => file.endsWith('.mp3'));
+
 		assignMissingTrackNumbers(mp3Files);
 
+		const sortedFiles = sortFiles(mp3Files);
+
 		const fileMetadata = await Promise.all(
-			mp3Files.map(async (filePath) => {
+			sortedFiles.map(async (filePath) => {
 				const tags = NodeID3.read(filePath) || {};
 				const metadata = await mm.parseFile(filePath);
 
