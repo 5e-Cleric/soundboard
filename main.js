@@ -77,6 +77,7 @@ ipcMain.handle('get-sounds', (event, list) => {
 
 ipcMain.handle('get-songs', async (event, list) => {
 	let directory = path.join(app.getPath('downloads'), 'songs', list === 'All' ? '' : list);
+	let thumbnail = list !== 'All' ? path.join(directory, 'thumbnail.jpg') : null;
 
 	try {
 		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
@@ -92,7 +93,6 @@ ipcMain.handle('get-songs', async (event, list) => {
 		const mp3Files = filePaths.filter((file) => file.endsWith('.mp3'));
 
 		assignMissingTrackNumbers(mp3Files);
-
 		const sortedFiles = sortFiles(mp3Files);
 
 		const fileMetadata = await Promise.all(
@@ -110,12 +110,14 @@ ipcMain.handle('get-songs', async (event, list) => {
 				};
 			})
 		);
-		return fileMetadata;
+
+		return { files: fileMetadata, thumbnail: fs.existsSync(thumbnail) ? thumbnail : null };
 	} catch (error) {
 		console.error('Error reading directory:', error);
-		return [];
+		return { files: [], thumbnail: null };
 	}
 });
+
 
 ipcMain.handle('get-subdirectories', (event, type) => {
 	const soundsDirectory = path.join(app.getPath('downloads'), type);

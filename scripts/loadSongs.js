@@ -103,10 +103,13 @@ function loadSongs(list) {
 	const audioList = document.getElementById('audioList');
 	const template = document.getElementById('songTemplate');
 
-	window.electron.ipcRenderer.invoke('get-songs', list).then((songs) => {
+	window.electron.ipcRenderer.invoke('get-songs', list).then((list) => {
 		//console.log(songs.length, ' songs loaded');
 		songList.textContent = '';
 		audioList.textContent = '';
+
+		const songs = list.files;
+		const thumbnail = list.thumbnail;
 
 		if (songs.length === 0) {
 			let noSongs = document.createElement('div');
@@ -116,7 +119,7 @@ function loadSongs(list) {
 
 		songs.forEach((song) => {
 			const { name, source, author, album, trackNumber, duration } = song;
-			const songName = name.split('.')[0];
+			const songName = name.substring(0, name.lastIndexOf('.')) || name;
 			const trackId = `${trackNumber}-${songName}`;
 			const durationWithUnits = formatDuration(duration);
 
