@@ -26,6 +26,7 @@
 						<ul></ul>
 					</div>
 				</div>
+				<button onclick="loadLists()">Reload lists</button>
 
 				<template id="listTemplate">
 					<li><button></button></li>
@@ -54,8 +55,8 @@
 						<i class="fas fa-clock"></i>
 					</div>
 					<div id="songList"></div>
-					<div id="audioList"></div>
 					<div class="playing">
+						<audio id="song" src data-track-id></audio>
 						<div class="currentSong">
 							<img src class="thumbnail">
 							<div class="details">

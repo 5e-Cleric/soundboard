@@ -90,8 +90,8 @@ function changeVolume(value, store) {
 	if (value < 0.5) volSymbol.classList = 'fa fa-volume-low';
 	if (value == 0) volSymbol.classList = 'fa fa-volume-xmark';
 
-	const allAudios = document.querySelectorAll('#audioList audio');
-	allAudios.forEach((audio) => (audio.volume = value));
+	const audio = document.getElementById('song');
+	audio.volume = value;
 
 	if (store) {
 		localStorage.setItem(`song-volume`, value);
@@ -100,16 +100,14 @@ function changeVolume(value, store) {
 
 function loadSongs(list) {
 	const songList = document.getElementById('songList');
-	const audioList = document.getElementById('audioList');
 	const template = document.getElementById('songTemplate');
 
+	songList.classList.add('shuffling');
+
 	window.electron.ipcRenderer.invoke('get-songs', list).then((list) => {
-		//console.log(songs.length, ' songs loaded');
 		songList.textContent = '';
-		audioList.textContent = '';
 
 		const songs = list.files;
-		const thumbnail = list.thumbnail;
 
 		if (songs.length === 0) {
 			let noSongs = document.createElement('div');
@@ -118,11 +116,8 @@ function loadSongs(list) {
 		}
 
 		songs.forEach((song) => {
-			const { name, source, author, album, trackNumber, duration } = song;
-			const songName = name.substring(0, name.lastIndexOf('.')) || name;
-			const trackId = `${trackNumber}-${songName}`;
-			const durationWithUnits = formatDuration(duration);
-
+			const songName = song.name.substring(0, song.name.lastIndexOf('.')) || song.name;
+			const durationWithUnits = formatDuration(song.duration);
 			const songElement = template.content.cloneNode(true);
 			const templateNumber = songElement.querySelector('.number');
 			const templateButton = songElement.querySelector('button');
@@ -131,36 +126,38 @@ function loadSongs(list) {
 			const templateAlbum = songElement.querySelector('.album');
 			const templateDuration = songElement.querySelector('.duration');
 
-			songElement.querySelector('.song').setAttribute('data-track-id', trackId);
-			templateButton.addEventListener('click', () => playSong(trackId));
+			songElement.querySelector('.song').setAttribute('data-track-id', song.id);
+			songElement.querySelector('.song').setAttribute('data-source', song.source);
+			templateButton.addEventListener('click', () => playSong(song));
 
-			templateNumber.textContent = trackNumber;
+			templateNumber.textContent = song.trackNumber;
 			templateTitle.textContent = songName;
-			templateAuthor.textContent = author;
-			templateAlbum.textContent = album;
+			templateAuthor.textContent = song.author;
+			templateAlbum.textContent = song.album;
 			templateDuration.textContent = durationWithUnits;
 
 			songList.appendChild(songElement);
-			const audioElement = `<audio src="${source}" data-track-id="${trackId}"></audio>`;
-			audioList.innerHTML += audioElement;
 		});
 
-		const savedVolume = localStorage.getItem(`song-volume`);
-		savedVolume != null && changeVolume(savedVolume);
+		const randomSong = songs[Math.floor(Math.random() * songs.length)];
+		console.log(songs, randomSong);
+		if (randomSong) loadControls(randomSong);
+
+		setTimeout(() => songList.classList.remove('shuffling'), 500);
 	});
 }
 
-function stopSong(trackId, time) {
-	let audio = getAudio(trackId);
+function stopSong(time) {
+	const audio = document.getElementById('song');
 
 	if (time !== undefined) {
 		audio.currentTime = time;
 	}
 	audio.pause();
 
-	const song = getSong(trackId);
-	song.classList.remove('playing');
-	const buttonIcon = song.querySelector(`button i`);
+	const songElement = getSong(audio.getAttribute(`data-track-id`));
+	songElement.classList.remove('playing');
+	const buttonIcon = songElement.querySelector(`button i`);
 	buttonIcon.classList.remove('fa-pause');
 	buttonIcon.classList.add('fa-play');
 
@@ -181,57 +178,47 @@ function formatDuration(durationInSeconds) {
 	}
 }
 
-function playSong(trackId) {
-	let clickedAudio = getAudio(trackId);
-	if (!clickedAudio) {
-		console.warn(`No audio found for: ${songName}`);
-		return;
-	}
-	const isPlaying = !clickedAudio.paused;
+function playSong(id, source) {
+	const audio = document.getElementById('song');
+	audio.setAttribute('data-track-id', id);
+	audio.setAttribute('source', source);
+
+	const isPlaying = !audio.paused;
 	if (isPlaying) {
-		stopSong(trackId);
+		stopSong();
 	} else {
-		const allSongs = document.querySelectorAll('#audioList audio');
-		allSongs.forEach((audio) => {
-			if (audio !== clickedAudio && !audio.paused) {
-				stopSong(audio.getAttribute('data-track-id'), 0);
-			}
-		});
+		loadControls(song);
+		setTimeout(() => audio.play(), 50);
 
-		loadControls(trackId);
-		setTimeout(() => clickedAudio.play(), 50);
-
-		const song = getSong(trackId);
-		song.classList.add('playing');
-		const buttonIcon = song.querySelector(`button i`);
+		const songElement = getSong(id);
+		songElement.classList.add('playing');
+		const buttonIcon = songElement.querySelector(`button i`);
 		buttonIcon.classList.remove('fa-play');
 		buttonIcon.classList.add('fa-pause');
 		const playIcon = document.querySelector('#content-songs .buttons .play i');
 		playIcon.classList.remove('fa-play');
 		playIcon.classList.add('fa-pause');
 
-		clickedAudio.addEventListener('ended', () => loadNext(trackId));
+		audio.addEventListener('ended', () => loadNext(song));
 	}
 }
 
-function getAudio(trackId) {
-	return document.querySelector(`#audioList audio[data-track-id="${trackId}"]`);
+function getSong(id) {
+	return document.querySelector(`#songList .song[data-track-id="${id}"]`);
 }
 
-function getSong(trackId) {
-	return document.querySelector(`#songList .song[data-track-id="${trackId}"]`);
-}
-
-function loadControls(trackId) {
-	let audio = getAudio(trackId);
-	if (!audio) return;
+function loadControls(song) {
+	const audio = document.getElementById('song');
 
 	const playing = document.querySelector('#content-songs .playing');
+	const thumbnail = document.querySelector('.currentSong .thumbnail');
 	const title = playing.querySelector('.currentSong .details .title');
 	const author = playing.querySelector('.currentSong .details .author');
 
-	title.textContent = getSong(trackId).querySelector('.title').textContent;
-	author.textContent = getSong(trackId).querySelector('.author').textContent;
+	console.log(song);
+	if (thumbnail) thumbnail.setAttribute('src', song.thumbnail);
+	title.textContent = song.name;
+	author.textContent = song.author;
 	const controls = playing.querySelector('.buttons');
 	const progressBar = playing.querySelector('input.progress');
 
@@ -248,15 +235,15 @@ function loadControls(trackId) {
 	const newAfter = controls.querySelector('.after');
 
 	newBefore.addEventListener('click', () => {
-		if ((audio.currentTime / audio.duration) > 0.25) {
+		if (audio.currentTime / audio.duration > 0.25) {
 			audio.currentTime = 0;
 		} else {
-			loadLast(trackId);
+			loadLast(song);
 		}
 	});
 
-	newPlay.addEventListener('click', () => playSong(trackId));
-	newAfter.addEventListener('click', () => loadNext(trackId));
+	newPlay.addEventListener('click', () => playSong(song));
+	newAfter.addEventListener('click', () => loadNext(song));
 
 	audio.addEventListener('timeupdate', () => {
 		progressBar.value = audio.currentTime / audio.duration;
@@ -267,52 +254,55 @@ function loadControls(trackId) {
 	});
 }
 
-function loadNext(trackId) {
+function loadNext(song) {
 	const loopState = document.querySelector('#content-songs .buttons .loop').getAttribute('data-state');
 	const songList = document.querySelectorAll('#songList .song');
-	const nextSong = getSong(trackId).nextElementSibling;
+	const nextSong = getSong(song.id).nextElementSibling;
 	const songIsLast = !nextSong;
 
-	stopSong(trackId, 0);
+	stopSong(0);
 
-	const getNextTrackId = () => {
+	const getNextid = () => {
 		if (loopState === 'song') {
-			return trackId;
+			return song.id, song.source;
 		} else if (songIsLast) {
-			return loopState === 'list' ? songList[0].getAttribute('data-track-id') : null;
+			return loopState === 'list'
+				? (songList[0].getAttribute('data-track-id'), songList[0].getAttribute('data-source'))
+				: null;
 		} else {
-			return nextSong.getAttribute('data-track-id');
+			return nextSong.getAttribute('data-track-id'), nextSong.getAttribute('data-source');
 		}
 	};
 
-	const nextTrackId = getNextTrackId();
-	if (nextTrackId) {
-		playSong(nextTrackId);
+	const nextid = getNextid();
+	if (nextid) {
+		playSong(nextid);
 	}
 }
 
-function loadLast(trackId) {
+function loadLast(song) {
 	const loopState = document.querySelector('#content-songs .buttons .loop').getAttribute('data-state');
 	const songList = document.querySelectorAll('#songList .song');
-	const lastSong = getSong(trackId).previousElementSibling;
+	const lastSong = getSong(song.id).previousElementSibling;
 	const songIsFirst = !lastSong;
 
-	console.log(lastSong);
-	stopSong(trackId, 0);
+	stopSong(0);
 
-	const getLastTrackId = () => {
+	const getLastid = () => {
 		if (loopState === 'song') {
-			return trackId;
+			return song.id, song.source;
 		} else if (songIsFirst) {
-			return loopState === 'list' ? songList[songList.length-1].getAttribute('data-track-id') : null;
+			return loopState === 'list'
+				? (songList[songList.length - 1].getAttribute('data-track-id'), lastSong.getAttribute('data-source'))
+				: null;
 		} else {
-			return lastSong.getAttribute('data-track-id');
+			return lastSong.getAttribute('data-track-id'), lastSong.getAttribute('data-source');
 		}
 	};
 
-	const lastTrackId = getLastTrackId();
-	if (lastTrackId) {
-		playSong(lastTrackId);
+	const lastid = getLastid();
+	if (lastid) {
+		playSong(lastid);
 	}
 }
 

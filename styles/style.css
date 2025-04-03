@@ -5,6 +5,7 @@
 	color: #ddd;
 
 	--bg-1: #333;
+	--bg-1-img: url("C:\\Repositories\\soundboard\\styles\\black scales pattern.png");
 	--bg-2: #444;
 	--button-bg: #555;
 	--button-bg-hover: #666;
@@ -55,7 +56,9 @@ button {
 
 body {
 	position: relative;
-	background: var(--bg-1);
+	background-color: var(--bg-1);
+	background-image: var(--bg-1-img);
+	background-size: 100px;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
@@ -96,9 +99,10 @@ body {
 				position: absolute;
 				inset: 0;
 				z-index: 0;
-				background-color: var(--bg-1);
+				visibility: hidden;
 
 				&.open {
+					visibility: visible;
 					z-index: 1;
 				}
 
@@ -199,7 +203,6 @@ body {
 								width: 50px;
 								text-align: center;
 							}
-
 						}
 					}
 
@@ -211,26 +214,36 @@ body {
 						padding: 20px;
 						border-top: 1px solid var(--border-1);
 						display: grid;
-						grid-template-columns: 300px 1fr 300px;
+						grid-template-columns: 400px 1fr 300px;
 						align-items: center;
 						justify-items: center;
 
-						.details {
-							width: 300px;
+						.currentSong {
 							display: flex;
-							flex-direction: column;
 							padding-left: 20px;
+							gap: 20px;
 
-							.title, .author {
-								width: 300px;
-								overflow: hidden;
-								white-space: nowrap;
-								text-overflow: ellipsis;
+							.thumbnail {
+								width: 50px;
+								height: 50px;
 							}
 
-							.author {
-								font-size: 0.8em;
-								opacity: 0.8;
+							.details {
+								width: 300px;
+								display: flex;
+								flex-direction: column;
+
+								.title, .author {
+									width: 300px;
+									overflow: hidden;
+									white-space: nowrap;
+									text-overflow: ellipsis;
+								}
+
+								.author {
+									font-size: 0.8em;
+									opacity: 0.8;
+								}
 							}
 						}
 
@@ -267,19 +280,16 @@ body {
 								.progress {
 									display: block;
 									width: 100%;
-									min-width:300px;
+									min-width: 300px;
 									accent-color: white;
 								}
 							}
-
-
-
 						}
 
 						.volume {
 							display: flex;
 							align-items: center;
-							gap:20px;
+							gap: 20px;
 
 							button {
 								width: 35px;
@@ -321,7 +331,7 @@ body {
 
 			.lists {
 				position: relative;
-				height: 100%;
+				height: 50%;
 				width: 100%;
 
 				.listTab {
@@ -335,7 +345,7 @@ body {
 					}
 
 					h2 {
-						margin-bottom:30px;
+						margin-bottom: 30px;
 					}
 
 					ul {

@@ -75,6 +75,27 @@ ipcMain.handle('get-sounds', (event, list) => {
 	}
 });
 
+const { nanoid } = require('nanoid');
+
+function assignMissingUFID(filePath) {
+	let tags = NodeID3.read(filePath) || {};
+
+	if (!tags.UFID) {
+		const newUFID = nanoid();
+		const updatedTags = {
+			...tags,
+			UFID: {
+				owner_identifier: 'your-app-name',
+				identifier: newUFID,
+			},
+		};
+		NodeID3.write(updatedTags, filePath);
+		return newUFID;
+	}
+
+	return tags.UFID.identifier;
+}
+
 ipcMain.handle('get-songs', async (event, list) => {
 	let directory = path.join(app.getPath('downloads'), 'songs', list === 'All' ? '' : list);
 	let thumbnail = list !== 'All' ? path.join(directory, 'thumbnail.jpg') : null;
@@ -100,13 +121,18 @@ ipcMain.handle('get-songs', async (event, list) => {
 				const tags = NodeID3.read(filePath) || {};
 				const metadata = await mm.parseFile(filePath);
 
+				const songId = assignMissingUFID(filePath);
+				const base64Image = tags.image?.imageBuffer.toString('base64') || '';
+				const imageSrc = `data:${tags.image?.mime};base64,${base64Image}` || '';
 				return {
+					id: songId,
 					name: path.basename(filePath),
 					source: filePath,
 					author: tags.artist || 'Unknown Artist',
 					album: tags.album || 'Unknown Album',
 					trackNumber: tags.trackNumber || 'Unknown',
 					duration: metadata.format.duration ? Math.round(metadata.format.duration) : 'Unknown',
+					thumbnail: imageSrc,
 				};
 			})
 		);
@@ -117,7 +143,6 @@ ipcMain.handle('get-songs', async (event, list) => {
 		return { files: [], thumbnail: null };
 	}
 });
-
 
 ipcMain.handle('get-subdirectories', (event, type) => {
 	const soundsDirectory = path.join(app.getPath('downloads'), type);

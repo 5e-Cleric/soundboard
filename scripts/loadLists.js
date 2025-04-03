@@ -3,6 +3,9 @@ function loadLists() {
 	const songsList = document.querySelector('#list-songs ul');
 	const template = document.getElementById('listTemplate');
 
+	soundList.textContent = '';
+	songsList.textContent = '';
+
 	window.electron.ipcRenderer.invoke('get-subdirectories', 'sounds').then((folders) => {
 		let All = document.createElement('li');
 		All.innerHTML = `<button onclick="loadSounds('All')">All</button>`;
