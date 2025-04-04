@@ -21,6 +21,8 @@ function initializeSongPage() {
 	loadSongs('All');
 }
 
+let allSongs = [];
+
 function shuffleList() {
 	const songList = document.getElementById('songList');
 	const songs = Array.from(songList.getElementsByClassName('song'));
@@ -101,6 +103,7 @@ function changeVolume(value, store) {
 function loadSongs(list) {
 	const songList = document.getElementById('songList');
 	const template = document.getElementById('songTemplate');
+	const currentSongId = document.getElementById('song').getAttribute('data-track-id');
 
 	songList.classList.add('shuffling');
 
@@ -108,6 +111,7 @@ function loadSongs(list) {
 		songList.textContent = '';
 
 		const songs = list.files;
+		allSongs = songs;
 
 		if (songs.length === 0) {
 			let noSongs = document.createElement('div');
@@ -137,11 +141,14 @@ function loadSongs(list) {
 			templateDuration.textContent = durationWithUnits;
 
 			songList.appendChild(songElement);
+			setTimeout(() => {
+				if (song.id == currentSongId) setPlayingState(song);
+			}, 50);
 		});
 
 		const randomSong = songs[Math.floor(Math.random() * songs.length)];
-		console.log(songs, randomSong);
-		if (randomSong) loadControls(randomSong);
+		if (!currentSongId && randomSong) loadControls(randomSong);
+		
 
 		setTimeout(() => songList.classList.remove('shuffling'), 500);
 	});
@@ -155,7 +162,7 @@ function stopSong(time) {
 	}
 	audio.pause();
 
-	const songElement = getSong(audio.getAttribute(`data-track-id`));
+	const songElement = getSongElement(audio.getAttribute(`data-track-id`));
 	songElement.classList.remove('playing');
 	const buttonIcon = songElement.querySelector(`button i`);
 	buttonIcon.classList.remove('fa-pause');
@@ -178,46 +185,53 @@ function formatDuration(durationInSeconds) {
 	}
 }
 
-function playSong(id, source) {
+function playSong(song) {
 	const audio = document.getElementById('song');
-	audio.setAttribute('data-track-id', id);
-	audio.setAttribute('source', source);
+	audio.setAttribute('data-track-id', song.id);
+	audio.setAttribute('src', song.source);
 
 	const isPlaying = !audio.paused;
 	if (isPlaying) {
 		stopSong();
 	} else {
 		loadControls(song);
+		setPlayingState(song);
 		setTimeout(() => audio.play(), 50);
-
-		const songElement = getSong(id);
-		songElement.classList.add('playing');
-		const buttonIcon = songElement.querySelector(`button i`);
-		buttonIcon.classList.remove('fa-play');
-		buttonIcon.classList.add('fa-pause');
-		const playIcon = document.querySelector('#content-songs .buttons .play i');
-		playIcon.classList.remove('fa-play');
-		playIcon.classList.add('fa-pause');
 
 		audio.addEventListener('ended', () => loadNext(song));
 	}
 }
 
-function getSong(id) {
+function setPlayingState(song) {
+	const songElement = getSongElement(song.id);
+	songElement.classList.add('playing');
+	const buttonIcon = songElement.querySelector(`button i`);
+	buttonIcon.classList.remove('fa-play');
+	buttonIcon.classList.add('fa-pause');
+	const playIcon = document.querySelector('#content-songs .buttons .play i');
+	playIcon.classList.remove('fa-play');
+	playIcon.classList.add('fa-pause');
+}
+
+function getSongElement(id) {
 	return document.querySelector(`#songList .song[data-track-id="${id}"]`);
+}
+
+function getSong(id) {
+	return allSongs.filter((song) => song.id === id);
 }
 
 function loadControls(song) {
 	const audio = document.getElementById('song');
+	const songName = song.name.substring(0, song.name.lastIndexOf('.')) || song.name;
 
-	const playing = document.querySelector('#content-songs .playing');
+	const playing = document.querySelector('#content-songs > .playing');
 	const thumbnail = document.querySelector('.currentSong .thumbnail');
-	const title = playing.querySelector('.currentSong .details .title');
-	const author = playing.querySelector('.currentSong .details .author');
+	const title = playing.querySelector(' .currentSong .details .title');
+	const author = playing.querySelector(' .currentSong .details .author');
 
-	console.log(song);
 	if (thumbnail) thumbnail.setAttribute('src', song.thumbnail);
-	title.textContent = song.name;
+	title.textContent = songName;
 	author.textContent = song.author;
 	const controls = playing.querySelector('.buttons');
 	const progressBar = playing.querySelector('input.progress');
@@ -255,22 +269,25 @@ function loadControls(song) {
 }
 
 function loadNext(song) {
+	if (!getSong(song.id)) {
+		stopSong(0);
+		console.error('There is no next song');
+		return;
+	}
 	const loopState = document.querySelector('#content-songs .buttons .loop').getAttribute('data-state');
-	const songList = document.querySelectorAll('#songList .song');
-	const nextSong = getSong(song.id).nextElementSibling;
+	//const songList = document.querySelectorAll('#songList .song');
+	const nextSong = getSong(getSongElement(song.id).nextElementSibling.getAttribute('data-track-id'));
 	const songIsLast = !nextSong;
 
 	stopSong(0);
 
 	const getNextid = () => {
 		if (loopState === 'song') {
-			return song.id, song.source;
+			return song;
 		} else if (songIsLast) {
-			return loopState === 'list'
-				? (songList[0].getAttribute('data-track-id'), songList[0].getAttribute('data-source'))
-				: null;
+			return loopState === 'list' ? allSongs[0] : null;
 		} else {
-			return nextSong.getAttribute('data-track-id'), nextSong.getAttribute('data-source');
+			return nextSong;
 		}
 	};
 
@@ -283,20 +300,18 @@ function loadNext(song) {
 function loadLast(song) {
 	const loopState = document.querySelector('#content-songs .buttons .loop').getAttribute('data-state');
 	const songList = document.querySelectorAll('#songList .song');
-	const lastSong = getSong(song.id).previousElementSibling;
+	const lastSong = getSong(getSongElement(song.id).previousElementSibling.getAttribute('data-track-id'));
 	const songIsFirst = !lastSong;
 
 	stopSong(0);
 
 	const getLastid = () => {
 		if (loopState === 'song') {
-			return song.id, song.source;
+			return song;
 		} else if (songIsFirst) {
-			return loopState === 'list'
-				? (songList[songList.length - 1].getAttribute('data-track-id'), lastSong.getAttribute('data-source'))
-				: null;
+			return loopState === 'list' ? allSongs[allSongs.length - 1] : null;
 		} else {
-			return lastSong.getAttribute('data-track-id'), lastSong.getAttribute('data-source');
+			return lastSong;
 		}
 	};
 

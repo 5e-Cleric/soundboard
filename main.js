@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
-const NodeID3 = require('node-id3');
+
 const mm = require('music-metadata');
 
 function getFilesInDirectory(directory) {
@@ -76,24 +76,26 @@ ipcMain.handle('get-sounds', (event, list) => {
 });
 
 const { nanoid } = require('nanoid');
+const NodeID3 = require('node-id3');
 
 function assignMissingUFID(filePath) {
 	let tags = NodeID3.read(filePath) || {};
 
-	if (!tags.UFID) {
+	if (!tags.uniqueFileIdentifier || !tags.uniqueFileIdentifier[0].ownerIdentifier) {
 		const newUFID = nanoid();
 		const updatedTags = {
 			...tags,
-			UFID: {
-				owner_identifier: 'your-app-name',
-				identifier: newUFID,
-			},
+			UFID: [
+				{
+					ownerIdentifier: 'SNDBRD',
+					identifier: Buffer.from(newUFID),
+				},
+			],
 		};
 		NodeID3.write(updatedTags, filePath);
 		return newUFID;
 	}
-
-	return tags.UFID.identifier;
+	return tags.uniqueFileIdentifier[0].identifier.toString();
 }
 
 ipcMain.handle('get-songs', async (event, list) => {

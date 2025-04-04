@@ -3,7 +3,7 @@ function loadSounds(list) {
 	const template = document.getElementById('soundTemplate');
 
 	window.electron.ipcRenderer.invoke('get-sounds', list).then((sounds) => {
-		console.log(sounds.length, ' sounds loaded');
+		//console.log(sounds.length, ' sounds loaded');
 		soundGrid.textContent = '';
 
 		if (sounds.length === 0) {
