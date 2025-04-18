@@ -1,6 +1,42 @@
+function createListElement(listName) {
+	const div = document.createElement('div');
+	div.className = `list ${listName}`;
+	div.setAttribute('data-color', getRandomColor(360, 20, 40, 40, 50, 40));
+	const title = document.createElement('h3');
+	title.textContent = listName;
+	div.appendChild(title);
+	return div;
+}
+
+function appendSoundToList(listDiv, sound) {
+	const soundName = sound.split('\\').pop().split('.')[0];
+
+	const soundElement = document.getElementById('soundTemplate').content.cloneNode(true);
+	const button = soundElement.querySelector('button');
+	const audio = soundElement.querySelector('audio');
+	const slider = soundElement.querySelector('input');
+	const savedVolume = localStorage.getItem(`volume-${soundName}`);
+	audio.setAttribute('src', sound);
+	savedVolume != null && (audio.volume = savedVolume);
+	savedVolume != null && (slider.value = savedVolume);
+	savedVolume != null && (slider.nextElementSibling.textContent = `${Math.round(savedVolume * 100)}%`);
+
+	button.textContent = soundName;
+	button.setAttribute('data-color', getRandomColor());
+	button.addEventListener('click', () => playSound(soundName));
+
+	slider.addEventListener('input', (event) => {
+		slider.nextElementSibling.textContent = `${Math.round(slider.value * 100)}%`;
+		const volume = event.target.value;
+		localStorage.setItem(`volume-${soundName}`, volume);
+		audio.volume = volume;
+	});
+
+	listDiv.appendChild(soundElement);
+}
+
 function loadSounds(list) {
 	const soundGrid = document.getElementById('soundGrid');
-	const template = document.getElementById('soundTemplate');
 
 	window.electron.ipcRenderer.invoke('get-sounds', list).then((sounds) => {
 		//console.log(sounds.length, ' sounds loaded');
@@ -8,39 +44,42 @@ function loadSounds(list) {
 
 		if (sounds.length === 0) {
 			let noSounds = document.createElement('div');
-			noSounds.innerHTML = `<p>You may add more sounds adding them inside the sounds directory in your downloads folder.</p>`;
+			noSounds.innerHTML = `<p>You may add more sounds by adding them inside the sounds directory in your music folder.</p>`;
 			soundGrid.appendChild(noSounds);
 		}
 
-		sounds.forEach((sound) => {
-			const soundName = sound.split('\\').pop().split('.')[0];
-
-			const soundElement = template.content.cloneNode(true);
-			const button = soundElement.querySelector('button');
-			const audio = soundElement.querySelector('audio');
-			const slider = soundElement.querySelector('input');
-			const savedVolume = localStorage.getItem(`volume-${soundName}`);
-
-			audio.setAttribute('src', sound);
-			savedVolume != null && (audio.volume = savedVolume);
-			savedVolume != null && (slider.value = savedVolume);
-			savedVolume != null && (slider.nextElementSibling.textContent = `${Math.round(savedVolume * 100)}%`);
-
-			button.textContent = soundName;
-			button.setAttribute('data-color', getRandomColor());
-			button.addEventListener('click', () => playSound(soundName));
-
-			slider.addEventListener('input', (event) => {
-				slider.nextElementSibling.textContent = `${Math.round(slider.value * 100)}%`;
-				const volume = event.target.value;
-				localStorage.setItem(`volume-${soundName}`, volume);
-				audio.volume = volume;
+		if (list !== 'All') {
+			sounds.forEach((sound) => {
+				const listDiv = createListElement('Default');
+				appendSoundToList(listDiv, sound);
+				soundGrid.appendChild(listDiv);
 			});
+		} else {
+			let lists = [];
+			sounds.forEach((sound) => {
+				const parts = sound.split(/[\\/]/);
+				const folderName = parts[parts.length - 2];
+				const existing = lists.find((l) => l.listName === folderName);
+				if (existing) {
+					existing.sounds.push(sound);
+				} else {
+					lists.push({ listName: folderName, sounds: [sound] });
+				}
+			});
+			console.table(lists);
 
-			soundGrid.appendChild(soundElement);
-		});
+			lists.forEach((list) => {
+				const listDiv = createListElement(list.listName);
+				soundGrid.appendChild(listDiv);
+
+				list.sounds.forEach((sound) => {
+					appendSoundToList(listDiv, sound);
+				});
+			});
+		}
 	});
 }
+
 
 function playSound(soundName) {
 	let clickedAudio = document.querySelector(`[src$="${soundName}.mp3"]`);
@@ -75,12 +114,13 @@ function playSound(soundName) {
 	clickedAudio.play();
 }
 
-function getRandomColor() {
-	const HUE_RANGE = 360;
-	const SATURATION_MIN = 70;
-	const SATURATION_MAX = 90;
-	const LIGHTNESS_MIN = 70;
-	const LIGHTNESS_MAX = 80;
+function getRandomColor(hRange, sMin, sMax, lMin, lMax, o) {
+	const HUE_RANGE = hRange || 360;
+	const SATURATION_MIN = sMin || 70;
+	const SATURATION_MAX = sMax || 90;
+	const LIGHTNESS_MIN = lMin || 70;
+	const LIGHTNESS_MAX = lMax || 80;
+	const opacity = o || 100;
 
 	const hue = Math.random() * HUE_RANGE;
 	const saturation = SATURATION_MIN + Math.random() * (SATURATION_MAX - SATURATION_MIN);
@@ -108,7 +148,8 @@ function getRandomColor() {
 	const g = Math.round(f(p, q, h) * 255);
 	const b = Math.round(f(p, q, h - 1 / 3) * 255);
 
-	return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+	return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}${Math.round(opacity * 2.55).toString(16).padStart(2, '0')}`
+
 }
 
 loadSounds('All');

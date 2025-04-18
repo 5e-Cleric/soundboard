@@ -13,7 +13,7 @@ function loadLists() {
 
 		if (folders.length === 0) {
 			let noLists = document.createElement('li');
-			noLists.innerHTML = `<p>You may add more lists adding folders inside the sounds directory in your downloads folder.</p>`;
+			noLists.innerHTML = `<p>You may add more lists adding folders inside the sounds directory in your music folder.</p>`;
 			soundList.appendChild(noLists);
 		}
 		folders.forEach((folder) => {

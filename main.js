@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const folder = path.join(app.getPath('music'), 'soundboard');
 
 const mm = require('music-metadata');
 
@@ -55,7 +56,7 @@ function sortFiles(mp3Files) {
 }
 
 ipcMain.handle('get-sounds', (event, list) => {
-	let directory = path.join(app.getPath('downloads'), 'sounds', list === 'All' ? '' : list);
+	let directory = path.join(folder, 'sounds', list === 'All' ? '' : list);
 
 	try {
 		let filePaths = getFilesInDirectory(directory).map((file) => path.join(directory, file));
@@ -99,7 +100,7 @@ function assignMissingUFID(filePath) {
 }
 
 ipcMain.handle('get-songs', async (event, list) => {
-	let directory = path.join(app.getPath('downloads'), 'songs', list === 'All' ? '' : list);
+	let directory = path.join(folder, 'songs', list === 'All' ? '' : list);
 	let thumbnail = list !== 'All' ? path.join(directory, 'thumbnail.jpg') : null;
 
 	try {
@@ -124,8 +125,10 @@ ipcMain.handle('get-songs', async (event, list) => {
 				const metadata = await mm.parseFile(filePath);
 
 				const songId = assignMissingUFID(filePath);
-				const base64Image = tags.image?.imageBuffer.toString('base64') || '';
-				const imageSrc = `data:${tags.image?.mime};base64,${base64Image}` || '';
+				const imageSrc = tags.image?.imageBuffer
+					? `data:${tags.image.mime};base64,${tags.image.imageBuffer.toString('base64')}`
+					: null;
+
 				return {
 					id: songId,
 					name: path.basename(filePath),
@@ -134,7 +137,7 @@ ipcMain.handle('get-songs', async (event, list) => {
 					album: tags.album || 'Unknown Album',
 					trackNumber: tags.trackNumber || 'Unknown',
 					duration: metadata.format.duration ? Math.round(metadata.format.duration) : 'Unknown',
-					thumbnail: imageSrc,
+					...(imageSrc && { thumbnail: imageSrc }),
 				};
 			})
 		);
@@ -147,7 +150,7 @@ ipcMain.handle('get-songs', async (event, list) => {
 });
 
 ipcMain.handle('get-subdirectories', (event, type) => {
-	const soundsDirectory = path.join(app.getPath('downloads'), type);
+	const soundsDirectory = path.join(folder, type);
 	try {
 		return getSubdirectories(soundsDirectory);
 	} catch (error) {
@@ -168,4 +171,25 @@ app.whenReady().then(() => {
 	mainWindow.loadFile('index.html');
 	mainWindow.maximize();
 	mainWindow.show();
+
+	globalShortcut.register('MediaPlayPause', () => {
+		// Send a message to the renderer
+		mainWindow.webContents.send('media-play-pause');
+	});
+
+	globalShortcut.register('MediaNextTrack', () => {
+		mainWindow.webContents.send('media-next');
+	});
+
+	globalShortcut.register('MediaPreviousTrack', () => {
+		mainWindow.webContents.send('media-previous');
+	});
+
+	globalShortcut.register('MediaStop', () => {
+		mainWindow.webContents.send('media-stop');
+	});
+});
+
+app.on('will-quit', () => {
+	globalShortcut.unregisterAll();
 });
